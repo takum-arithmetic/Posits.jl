@@ -30,7 +30,7 @@ posits share many properties of a typical floating-point number system,
 this decision was made deliberately and for good reasons.
 
 ```julia
-julia> using Posit
+julia> using Posits
 
 julia> x = Posit8(4.0)
 Posit8(4.0)
