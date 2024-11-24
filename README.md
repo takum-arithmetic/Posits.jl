@@ -32,11 +32,11 @@ this decision was made deliberately and for good reasons.
 ```julia
 julia> using Posits
 
-julia> x = Posit8(4.0)
-Posit8(4.0)
+julia> x = Posit8(3.0)
+Posit8(3.0)
 
 julia> sqrt(x)
-Posit8(2.117)
+Posit8(1.75)
 ```
 
 A wide range of functions are implemented for the number types. If you find
