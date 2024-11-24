@@ -137,14 +137,14 @@ Base.precision(T::Type{<:AnyPosit}; base::Integer = 2) = precision(zero(T); base
 
 # eps (follow definition; for the types it is simply eps(Posit_(1.0))
 Base.eps(t::AnyPosit)     = max(t - prevfloat(t), nextfloat(t) - t)
-Base.eps(::Type{Posit8})  = Base.bitcast(Posit8,  0x2b)
-Base.eps(::Type{Posit16}) = Base.bitcast(Posit16, 0x1f2f)
-Base.eps(::Type{Posit32}) = Base.bitcast(Posit32, 0x160bc2b0)
-Base.eps(::Type{Posit64}) = Base.bitcast(Posit64, 0x0d7a50987ab4d7df)
-Base.eps(::Type{LogPosit8})  = Base.bitcast(LogPosit8,  0x30)
-Base.eps(::Type{LogPosit16}) = Base.bitcast(LogPosit16, 0x2400)
-Base.eps(::Type{LogPosit32}) = Base.bitcast(LogPosit32, 0x1a000000)
-Base.eps(::Type{LogPosit64}) = Base.bitcast(LogPosit64, 0x1100000000000000)
+Base.eps(::Type{Posit8})  = Base.bitcast(Posit8,  0x28)
+Base.eps(::Type{Posit16}) = Base.bitcast(Posit16, 0x0a00)
+Base.eps(::Type{Posit32}) = Base.bitcast(Posit32, 0x00a00000)
+Base.eps(::Type{Posit64}) = Base.bitcast(Posit64, 0x0000a00000000000)
+Base.eps(::Type{LogPosit8})  = Base.bitcast(LogPosit8,  0x24)
+Base.eps(::Type{LogPosit16}) = Base.bitcast(LogPosit16, 0x08f1)
+Base.eps(::Type{LogPosit32}) = Base.bitcast(LogPosit32, 0x008f1459)
+Base.eps(::Type{LogPosit64}) = Base.bitcast(LogPosit64, 0x00008eb3a9f01975)
 
 # rounding
 Base.round(t::AnyPosit) = typeof(t)(Base.round(Float64(t)))
