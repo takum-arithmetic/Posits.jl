@@ -488,23 +488,30 @@ Printf.tofloat(t::AnyPosit) = Float64(t)
 Base.bitstring(t::AnyPosit) = Base.bitstring(reinterpret(Unsigned, t))
 
 # next and previous number
-Base.nextfloat(t::Posit8)  = isnar(t) ? NaRPosit8  : Base.bitcast(Posit8, reinterpret(Unsigned, t) + UInt8(1))
-Base.nextfloat(t::Posit16) = isnar(t) ? NaRPosit16 : Base.bitcast(Posit16, reinterpret(Unsigned, t) + UInt16(1))
-Base.nextfloat(t::Posit32) = isnar(t) ? NaRPosit32 : Base.bitcast(Posit32, reinterpret(Unsigned, t) + UInt32(1))
-Base.nextfloat(t::Posit64) = isnar(t) ? NaRPosit64 : Base.bitcast(Posit64, reinterpret(Unsigned, t) + UInt64(1))
-Base.nextfloat(t::LogPosit8)  = isnar(t) ? NaRLogPosit8  : Base.bitcast(LogPosit8, reinterpret(Unsigned, t) + UInt8(1))
-Base.nextfloat(t::LogPosit16) = isnar(t) ? NaRLogPosit16 : Base.bitcast(LogPosit16, reinterpret(Unsigned, t) + UInt16(1))
-Base.nextfloat(t::LogPosit32) = isnar(t) ? NaRLogPosit32 : Base.bitcast(LogPosit32, reinterpret(Unsigned, t) + UInt32(1))
-Base.nextfloat(t::LogPosit64) = isnar(t) ? NaRLogPosit64 : Base.bitcast(LogPosit64, reinterpret(Unsigned, t) + UInt64(1))
+function Base.nextfloat(t::AnyPosit, n::Integer)
+	# preserve NaR
+	if isnar(t)
+		return t
+	end
 
-Base.prevfloat(t::Posit8)  = isnar(t) ? NaRPosit8  : Base.bitcast(Posit8,  reinterpret(Unsigned, t) - UInt8(1))
-Base.prevfloat(t::Posit16) = isnar(t) ? NaRPosit16 : Base.bitcast(Posit16, reinterpret(Unsigned, t) - UInt16(1))
-Base.prevfloat(t::Posit32) = isnar(t) ? NaRPosit32 : Base.bitcast(Posit32, reinterpret(Unsigned, t) - UInt32(1))
-Base.prevfloat(t::Posit64) = isnar(t) ? NaRPosit64 : Base.bitcast(Posit64, reinterpret(Unsigned, t) - UInt64(1))
-Base.prevfloat(t::LogPosit8)  = isnar(t) ? NaRLogPosit8  : Base.bitcast(LogPosit8,  reinterpret(Unsigned, t) - UInt8(1))
-Base.prevfloat(t::LogPosit16) = isnar(t) ? NaRLogPosit16 : Base.bitcast(LogPosit16, reinterpret(Unsigned, t) - UInt16(1))
-Base.prevfloat(t::LogPosit32) = isnar(t) ? NaRLogPosit32 : Base.bitcast(LogPosit32, reinterpret(Unsigned, t) - UInt32(1))
-Base.prevfloat(t::LogPosit64) = isnar(t) ? NaRLogPosit64 : Base.bitcast(LogPosit64, reinterpret(Unsigned, t) - UInt64(1))
+	# convert t to its integral representation
+	t_integer = reinterpret(Signed, t)
+
+	# set result to NaR and catch valid cases later
+	result_integer = typemin(t_integer)
+
+	# check if adding n would under- or overflow, return NaR otherwise
+	if (n >= 0 && t_integer <= reinterpret(Signed, typemax(t)) - n) ||
+	   (n < 0 && t_integer >= reinterpret(Signed, typemin(t)) + (-n))
+		result_integer = typeof(t_integer)(t_integer + n)
+	end
+
+	return Base.bitcast(typeof(t), result_integer)
+end
+Base.prevfloat(t::AnyPosit, n::Integer) = Base.nextfloat(t, -n)
+
+Base.nextfloat(t::AnyPosit) = Base.nextfloat(t, 1)
+Base.prevfloat(t::AnyPosit) = Base.prevfloat(t, 1)
 
 # math functions
 Base.abs(t::AnyPosit) = (t < 0) ? -t : t
