@@ -228,6 +228,16 @@ LogPosit32(i::Integer) = Base.convert(LogPosit32, Base.convert(Float64, i))
 LogPosit64(i::Integer) = Base.convert(LogPosit64, Base.convert(Float64, i))
 Base.promote_rule(T::Type{<:AnyPosit}, ::Type{<:Integer}) = T
 
+# conversion from irrational numbers
+Posit8(i::AbstractIrrational) = Posit8(Float64(i))
+Posit16(i::AbstractIrrational) = Posit16(Float64(i))
+Posit32(i::AbstractIrrational) = Posit32(Float64(i))
+Posit64(i::AbstractIrrational) = Posit64(Float64(i))
+LogPosit8(i::AbstractIrrational) = LogPosit8(Float64(i))
+LogPosit16(i::AbstractIrrational) = LogPosit16(Float64(i))
+LogPosit32(i::AbstractIrrational) = LogPosit32(Float64(i))
+LogPosit64(i::AbstractIrrational) = LogPosit64(Float64(i))
+
 # conversions to floating-point
 Base.Float16(t::Posit8)  = Float16(@ccall libposit.posit8_to_float32(reinterpret(Signed, t)::Int8)::Float32)
 Base.Float16(t::Posit16) = Float16(@ccall libposit.posit16_to_float32(reinterpret(Signed, t)::Int16)::Float32)
