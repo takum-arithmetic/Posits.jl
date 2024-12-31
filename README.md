@@ -17,6 +17,9 @@ is overall worse than the respective usual IEEE 754 floating-point hardware
 implementations, but it is sufficient to evaluate the formats for reasonably
 sized numerical benchmarks.
 
+In contrast to [SoftPosit.jl](https://github.com/milankl/SoftPosit.jl) this
+package also offers logarithmic posits and 64-bit precision.
+
 ## Usage
 
 The eight posit number types `Posit8`, `Posit16`, `Posit32`, `Posit64`
