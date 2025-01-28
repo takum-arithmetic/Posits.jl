@@ -1,7 +1,7 @@
 module Posits
 
-import Base: AbstractFloat, Int, Int8, Int16, Int32, Int64, Integer, Signed,
-	Unsigned, reinterpret
+import Base: AbstractFloat, Int, Int8, Int16, Int32, Int64, Integer, MPFR,
+	Signed, Unsigned, reinterpret
 
 import Printf
 
@@ -141,7 +141,7 @@ _mantissa_bit_count(t::LogPosit64) = @ccall libposit.posit_log64_precision(reint
 
 function Base.precision(t::AnyPosit; base::Integer = 2)
 	base > 1 || throw(DomainError(base, "`base` cannot be less than 2."))
-	m = _mantissa_bit_count(t)
+	m = 1 + _mantissa_bit_count(t)
 	return base == 2 ? Int(m) : floor(Int, m / log2(base))
 end
 
@@ -243,15 +243,71 @@ LogPosit32(i::Integer) = Base.convert(LogPosit32, Base.convert(Float64, i))
 LogPosit64(i::Integer) = Base.convert(LogPosit64, Base.convert(Float64, i))
 Base.promote_rule(T::Type{<:AnyPosit}, ::Type{<:Integer}) = T
 
+# conversion from BigFloat
+Posit8(f::BigFloat) = Posit8(Float64(f))
+Posit16(f::BigFloat) = Posit16(Float64(f))
+Posit32(f::BigFloat) = Posit32(Float64(f))
+LogPosit8(f::BigFloat) = LogPosit8(Float64(f))
+LogPosit16(f::BigFloat) = LogPosit16(Float64(f))
+LogPosit32(f::BigFloat) = LogPosit32(Float64(f))
+
+function Posit64(f::BigFloat)
+	if iszero(f)
+		# truncated() is buggy when the input is zero
+		return zero(Posit64)
+	else
+		# take the absolute value so we are only working with
+		# positive values, as only then can we directly transplant
+		# the fraction bits
+		fabs = abs(f)
+
+		# first round the BigFloat to the maximum possible number
+		# of posit fraction bits, namely 1 + (64 - 5) = 60, as
+		# this possibly rounds the value and lets us obtain the
+		# exponent for further processing
+		f60 = BigFloat(fabs; precision = 60)
+
+		# Build a raw posit with f60's exponent
+		rawp = ldexp(one(Posit64), exponent(f60))
+
+		# Obtain the number of fraction bits the raw posit can
+		# represent and round f60 down to this number of bits
+		fprec = BigFloat(f; precision = precision(rawp))
+
+		# During this process, fprec might have been rounded
+		# insofar that the exponent changed, which would require
+		# us to redo the whole process. We do it unconditionally,
+		# so we take the exponent of fprec, update the raw
+		# posit and round fprec accordingly to its capacity
+		rawp = ldexp(one(Posit64), exponent(fprec))
+		fprec = BigFloat(fprec; precision = precision(rawp))
+
+		# Now we have the raw posit, which we just need to fill
+		# with fprec's fraction bits. For this we use an obscure
+		# internal MPFR function and also unset the highest
+		# fraction bit, as it is stored implicitly in posits
+		fraction = Base.MPFR.truncated(UInt64, fprec.d::MPFR.BigFloatData, precision(rawp))
+		fraction &= ~(UInt64(2) ^ (precision(rawp) - 1))
+
+		# Combine raw posit and fraction
+		result = Base.bitcast(Posit64, Base.bitcast(UInt64, rawp) | fraction)
+
+		# Return the result, negating it if f was negative
+		return (f < 0) ? -result : result
+	end
+end
+
+# TODO Conversion from BigFloat to LogPosit64
+
 # conversion from irrational numbers
 Posit8(i::AbstractIrrational) = Posit8(Float64(i))
 Posit16(i::AbstractIrrational) = Posit16(Float64(i))
 Posit32(i::AbstractIrrational) = Posit32(Float64(i))
-Posit64(i::AbstractIrrational) = Posit64(Float64(i))
+Posit64(i::AbstractIrrational) = Posit64(BigFloat(i; precision = 60))
 LogPosit8(i::AbstractIrrational) = LogPosit8(Float64(i))
 LogPosit16(i::AbstractIrrational) = LogPosit16(Float64(i))
 LogPosit32(i::AbstractIrrational) = LogPosit32(Float64(i))
-LogPosit64(i::AbstractIrrational) = LogPosit64(Float64(i))
+LogPosit64(i::AbstractIrrational) = LogPosit64(Float64(i)) # TODO
 
 # conversions to floating-point
 Base.Float16(t::Posit8)  = Float16(@ccall libposit.posit8_to_float32(reinterpret(Signed, t)::Int8)::Float32)
@@ -471,6 +527,7 @@ Base.:(<=)(x::T, y::T) where {T <: AnyPosit} = reinterpret(Signed, x) <= reinter
 
 Base.isequal(x::T, y::T) where {T <: AnyPosit} = (x == y)
 
+# TODO: widen for 64-bit to BigFloat
 Base.widen(::Type{Posit8}) = Posit16
 Base.widen(::Type{Posit16}) = Posit32
 Base.widen(::Type{Posit32}) = Posit64
