@@ -71,6 +71,11 @@ Base.uinttype(::Type{<:AnyPosit16}) = UInt16
 Base.uinttype(::Type{<:AnyPosit32}) = UInt32
 Base.uinttype(::Type{<:AnyPosit64}) = UInt64
 
+Base.inttype(::Type{<:AnyPosit8})  = Int8
+Base.inttype(::Type{<:AnyPosit16}) = Int16
+Base.inttype(::Type{<:AnyPosit32}) = Int32
+Base.inttype(::Type{<:AnyPosit64}) = Int64
+
 # the only floating-point property that makes sense to implement for logarithmic posits is signbit()
 Base.signbit(t::AnyPosit8)  = (reinterpret(Unsigned, t) & 0x80) !== 0x00
 Base.signbit(t::AnyPosit16) = (reinterpret(Unsigned, t) & 0x8000) !== 0x0000
@@ -78,8 +83,18 @@ Base.signbit(t::AnyPosit32) = (reinterpret(Unsigned, t) & 0x80000000) !== 0x0000
 Base.signbit(t::AnyPosit64) = (reinterpret(Unsigned, t) & 0x8000000000000000) !== 0x0000000000000000
 
 # left undefined are sign_mask, exponent_mask, exponent_one, exponent_half,
-# significand_mask, exponent_bias, exponent_bits, significand_bits, significand,
-# exponent, decompose, frexp, ldexp, for now also for posits
+# significand_mask, exponent_bias, exponent_bits, significand_bits,
+# decompose, for now also for posits
+#
+# TODO cleaner
+Base.exponent(t::AnyPosit) = exponent(Float64(t))
+Base.significand(t::AnyPosit) = ldexp(t, -Base.exponent(t))
+Base.ldexp(t::AnyPosit, e::Integer) = t * ((typeof(t))(2) .^ e)
+function Base.frexp(t::AnyPosit)
+	exp = isnan(t) ? 0 : (Base.exponent(t) + 1)
+	x = ldexp(t, -exp)
+	return (x, exp)
+end
 
 Base.iszero(t::AnyPosit8)  = reinterpret(Unsigned, t) === 0x00
 Base.iszero(t::AnyPosit16) = reinterpret(Unsigned, t) === 0x0000
