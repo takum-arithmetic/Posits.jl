@@ -71,10 +71,12 @@ Base.uinttype(::Type{<:AnyPosit16}) = UInt16
 Base.uinttype(::Type{<:AnyPosit32}) = UInt32
 Base.uinttype(::Type{<:AnyPosit64}) = UInt64
 
-Base.inttype(::Type{<:AnyPosit8})  = Int8
-Base.inttype(::Type{<:AnyPosit16}) = Int16
-Base.inttype(::Type{<:AnyPosit32}) = Int32
-Base.inttype(::Type{<:AnyPosit64}) = Int64
+@static if VERSION ≥ v"1.10"
+	Base.inttype(::Type{<:AnyPosit8})  = Int8
+	Base.inttype(::Type{<:AnyPosit16}) = Int16
+	Base.inttype(::Type{<:AnyPosit32}) = Int32
+	Base.inttype(::Type{<:AnyPosit64}) = Int64
+end
 
 # the only floating-point property that makes sense to implement for logarithmic posits is signbit()
 Base.signbit(t::AnyPosit8)  = (reinterpret(Unsigned, t) & 0x80) !== 0x00
