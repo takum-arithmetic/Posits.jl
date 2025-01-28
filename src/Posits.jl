@@ -2,8 +2,8 @@ module Posits
 
 import Base: AbstractFloat, Int, Int8, Int16, Int32, Int64, Integer, MPFR,
 	Signed, Unsigned, reinterpret
-
 import Printf
+import Random: rand, randexp, AbstractRNG, Sampler
 
 using libposit_jll
 
@@ -653,6 +653,19 @@ for (posit_type, posit_type_cname, posit_integer_type) in posit_types
 		end
 	end
 end
+
+# random
+rand(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit8} = T(rand(rng, Float64))
+rand(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit16} = T(rand(rng, Float64))
+rand(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit32} = T(rand(rng, Float64))
+rand(rng::AbstractRNG, ::Sampler{Posit64}) = setprecision(BigFloat, 60) do; Posit64(rand(rng, BigFloat)) end
+rand(rng::AbstractRNG, ::Sampler{LogPosit64}) = LogPosit64(rand(rng, Float64)) # TODO
+
+randexp(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit8} = T(randexp(rng, Float64))
+randexp(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit16} = T(randexp(rng, Float64))
+randexp(rng::AbstractRNG, ::Sampler{T}) where {T <: AnyPosit32} = T(randexp(rng, Float64))
+randexp(rng::AbstractRNG, ::Sampler{Posit64}) = setprecision(BigFloat, 60) do; Posit64(randexp(rng, BigFloat)) end
+randexp(rng::AbstractRNG, ::Sampler{LogPosit64}) = LogPosit64(randexp(rng, Float64)) # TODO
 
 # miscellaneous
 Base.bswap(t::AnyPosit) = Base.bswap_int(t)
