@@ -1,6 +1,6 @@
 name = "Posits"
 uuid = "206caa4e-a773-11ef-0a96-55713be7837f"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Laslo Hunhold"]
 
 [deps]
