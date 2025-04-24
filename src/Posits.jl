@@ -98,6 +98,38 @@ function Base.frexp(t::AnyPosit)
 	return (x, exp)
 end
 
+# decompose returns a triple (number, power, denominator) such that the
+# original value is (number * (2^power) / denominator)
+function Base.decompose(p::AnyPosit)::NTuple{3,Int}
+	U = Base.uinttype(typeof(p))
+
+	# cover special case
+	if isnan(p)
+		return U(0), 0, 0
+	elseif p == zero(p)
+		return U(0), 0, 1
+	end
+
+	# take the absolute value of the input posit so we can work
+	# with the fraction directly
+	pabs = abs(p)
+	denominator = (p < zero(p)) ? -1 : 1
+
+	# obtain the fraction bits by masking them out, set the
+	# fraction_count'th bit, as it is the implicit bit we now need
+	# to store explicitly
+	fraction_count = precision(pabs) - 1
+	number = reinterpret(U, pabs) & ((one(U) << fraction_count) - one(U))
+	number |= one(U) << fraction_count
+
+	# the power is the exponent minus the fraction bit count
+	power = exponent(pabs) - fraction_count
+
+	return number, power, denominator
+end
+
+# TODO implement decompose() for logarithmic posits separately
+
 Base.iszero(t::AnyPosit8)  = reinterpret(Unsigned, t) === 0x00
 Base.iszero(t::AnyPosit16) = reinterpret(Unsigned, t) === 0x0000
 Base.iszero(t::AnyPosit32) = reinterpret(Unsigned, t) === 0x00000000
