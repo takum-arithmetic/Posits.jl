@@ -1,6 +1,6 @@
 name = "Posits"
 uuid = "206caa4e-a773-11ef-0a96-55713be7837f"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Laslo Hunhold"]
 
 [deps]
@@ -11,7 +11,7 @@ libposit_jll = "51f2fc5f-9d5c-580b-98f8-9638c2091362"
 [compat]
 Random = "1.6.0"
 julia = "1.6.7"
-libposit_jll = "1.0.0"
+libposit_jll = "1.0.2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
