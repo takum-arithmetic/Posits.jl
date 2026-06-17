@@ -575,8 +575,8 @@ Base.widen(::Type{LogPosit8}) = LogPosit16
 Base.widen(::Type{LogPosit16}) = LogPosit32
 Base.widen(::Type{LogPosit32}) = LogPosit64
 
-Base.widemul(x::Union{Posit8, Posit16, Posit32}, y::Union{Posit8, Posit16, Posit32}) = Basen.widen(x) * Base.widen(y)
-Base.widemul(x::Union{LogPosit8, LogPosit16, LogPosit32}, y::Union{LogPosit8, LogPosit16, LogPosit32}) = Basen.widen(x) * Base.widen(y)
+Base.widemul(x::Union{Posit8, Posit16, Posit32}, y::Union{Posit8, Posit16, Posit32}) = Base.widen(x) * Base.widen(y)
+Base.widemul(x::Union{LogPosit8, LogPosit16, LogPosit32}, y::Union{LogPosit8, LogPosit16, LogPosit32}) = Base.widen(x) * Base.widen(y)
 
 # output
 function Base.show(io::IO, t::AnyPosit)
@@ -708,6 +708,13 @@ randexp(rng::AbstractRNG, ::Sampler{LogPosit64}) = LogPosit64(randexp(rng, Float
 # miscellaneous
 Base.bswap(t::AnyPosit) = Base.bswap_int(t)
 
-# TODO: muladd?, rem?, mod?, random, isinf alias of isfinite?, posit?
+# TODO: muladd?, random, isinf alias of isfinite?, posit?
+Base.rem(x::T, y::T)        where {T <: AnyPosit} = T(rem(Float64(x), Float64(y)))
+Base.rem(x::T, y::Integer)  where {T <: AnyPosit} = T(rem(Float64(x), Float64(y)))
+Base.mod(x::T, y::T)        where {T <: AnyPosit} = T(mod(Float64(x), Float64(y)))
+Base.mod(x::T, y::Integer)  where {T <: AnyPosit} = T(mod(Float64(x), Float64(y)))
+Base.ceil(::Type{I}, x::T)  where {T <: AnyPosit, I <: Integer} = ceil(I, Float64(x))
+Base.floor(::Type{I}, x::T) where {T <: AnyPosit, I <: Integer} = floor(I, Float64(x))
+Base.convert(::Type{T}, z::Complex) where {T <: AnyPosit} = T(real(z))
 
 end
